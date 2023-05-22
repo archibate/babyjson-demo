@@ -2,6 +2,8 @@
 
 Education purpose C++17 JSON parser, teach you how to parsing string and numeric literials, as well as using std::variant and std::optional elegently.
 
+Bilibili Video: https://www.bilibili.com/video/BV1pa4y1g7v6
+
 ## How to Run
 
 ```
@@ -16,7 +18,7 @@ build/main
 2. Support string literials in single-quotes as well, e.g. 'string' and "string" should both work.
 3. Support for hex character escape sequence like '\x0D' in string (may need two more phase enums: Hex1, Hex2).
 
-### Challenge (if you can)
+## Challenge (accept if you can)
 
 1. Support for UCS2 character escape sequence like '\u000D' in string, and encode it as UTF-8 into std::string.
 2. Support for UCS4 character escape sequence like '\U0000000D' in string, and encode it as UTF-8 into std::string.
