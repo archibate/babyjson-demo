@@ -323,7 +323,7 @@ std::string dumper(JSONObject const& obj){
         dovisit(dovisit,obj);
     } else{
         //pretty version
-        int deepth = 0;
+        int depth = 0;
         auto dovisit =[&](auto &&func,JSONObject const& obj) -> void{
         std::visit(
             overloaded{
@@ -340,19 +340,19 @@ std::string dumper(JSONObject const& obj){
                     res += "{\n";
                     for(auto [key,value]:val){
                         res += "\t";
-                        for(int i = 0; i < deepth; i++)
+                        for(int i = 0; i < depth; i++)
                             res += "\t";
                         res += key;
                         res += " : ";
-                        deepth++;
+                        depth++;
                         func(func,value);
-                        deepth--;
+                        depth--;
                         res += ",";
                         res += "\n";
                     }
                     res = res.substr(0,res.size() - 2);
                     res += "\n";
-                    for(int i = 0; i < deepth; i++)
+                    for(int i = 0; i < depth; i++)
                         res += "\t";
                     res += "}";
                 },
