@@ -1,3 +1,4 @@
+// cspell: disable
 #include <variant>
 #include <vector>
 #include <unordered_map>
@@ -84,6 +85,19 @@ std::pair<JSONObject, size_t> parse(std::string_view json) {
             }
             if (auto num = try_parse_num<double>(str)) {
                 return {JSONObject{*num}, str.size()};
+            }
+        }
+    } else if (json[0] == 't' || json[0] == 'f' || json[0] == 'n') {
+        std::regex bool_re{"(true|false|null)"};
+        std::cmatch match;
+        if (std::regex_search(json.data(), json.data() + json.size(), match, bool_re)) {
+            std::string str = match.str();
+            if (str == "true") {
+                return {JSONObject{true}, str.size()};
+            } else if (str == "false") {
+                return {JSONObject{false}, str.size()};
+            } else if (str == "null") {
+                return {JSONObject{std::nullptr_t{}}, str.size()};
             }
         }
     } else if (json[0] == '"') {
@@ -177,7 +191,13 @@ template <class ...Fs>
 overloaded(Fs...) -> overloaded<Fs...>;
 
 int main() {
-    std::string_view str = R"JSON(985.211)JSON";
+    std::string_view str = R"JSON([
+        1.2, true, false,
+        {"abc": true,
+         "edf": null,
+         "key": [true, "13", null, "123", true]
+        }
+    ])JSON";
     auto [obj, eaten] = parse(str);
     print(obj);
     std::visit(
