@@ -55,6 +55,16 @@ std::optional<T> try_parse_num(std::string_view str) {
     return std::nullopt;
 }
 
+template <class T>
+std::optional<T> try_parse_num(std::string_view str, int base) {
+    T value;
+    auto res = std::from_chars(str.data(), str.data() + str.size(), value, base);
+    if (res.ec == std::errc() && res.ptr == str.data() + str.size()) {
+        return value;
+    }
+    return std::nullopt;
+}
+
 char unescaped_char(char c) {
     switch (c) {
     case 'n': return '\n';
@@ -100,11 +110,14 @@ std::pair<JSONObject, size_t> parse(std::string_view json) {
                 return {JSONObject{std::nullptr_t{}}, str.size()};
             }
         }
-    } else if (json[0] == '"') {
+    } else if (json[0] == '"' || json[0] == '\'') {
+        const char quote = json[0];
         std::string str;
         enum {
             Raw,
             Escaped,
+            Hex1,
+            Hex2
         } phase = Raw;
         size_t i;
         for (i = 1; i < json.size(); i++) {
@@ -112,15 +125,29 @@ std::pair<JSONObject, size_t> parse(std::string_view json) {
             if (phase == Raw) {
                 if (ch == '\\') {
                     phase = Escaped;
-                } else if (ch == '"') {
+                } else if (ch == quote) {
                     i += 1;
                     break;
                 } else {
                     str += ch;
                 }
             } else if (phase == Escaped) {
-                str += unescaped_char(ch);
-                phase = Raw;
+                if (ch == 'x') {
+                    phase = Hex1;
+                } else {
+                    str += unescaped_char(ch);
+                    phase = Raw;
+                }
+            } else if (phase == Hex1) {
+                phase = Hex2;
+            } else if (phase == Hex2) {
+                if (auto num = try_parse_num<char>(json.substr(i - 1, 2), 16)) {
+                    str += *num;
+                    phase = Raw;
+                } else {
+                    i = 0;
+                    break;
+                }
             }
         }
         return {JSONObject{std::move(str)}, i};
@@ -192,6 +219,8 @@ overloaded(Fs...) -> overloaded<Fs...>;
 
 int main() {
     std::string_view str = R"JSON([
+        "\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x61\x62\x63\x64\x65\x66",
+        '\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x61\x62\x63\x64\x65\x66',
         1.2, true, false,
         {"abc": true,
          "edf": null,
