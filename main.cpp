@@ -125,6 +125,8 @@ std::pair<JSONObject, size_t> parse(std::string_view json) {
             }
             res.push_back(std::move(obj));
             i += eaten;
+            //在一个数据插入后检查后面的空白，并吃掉
+            while(i < json.size() && std::isspace(static_cast<unsigned char>(json[i]))) ++i;
             if (json[i] == ',') {
                 i += 1;
             }
@@ -159,6 +161,10 @@ std::pair<JSONObject, size_t> parse(std::string_view json) {
             }
             i += valeaten;
             res.try_emplace(std::move(key), std::move(valobj));
+
+            //在一个数据插入后检查后面的空白，并吃掉
+            while(i < json.size() && std::isspace(static_cast<unsigned char>(json[i]))) ++i;
+
             if (json[i] == ',') {
                 i += 1;
             }
@@ -177,7 +183,13 @@ template <class ...Fs>
 overloaded(Fs...) -> overloaded<Fs...>;
 
 int main() {
-    std::string_view str = R"JSON(985.211)JSON";
+    std::string_view str = R"JSON([[1,2
+    ],"aa"])JSON";
+    std::string_view str2 = R"JSON({"aaa":
+                                        {
+                                         "bbb":1
+                                        },
+                                        "ccc":2})JSON";
     auto [obj, eaten] = parse(str);
     print(obj);
     std::visit(
